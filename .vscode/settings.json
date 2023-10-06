@@ -1,3 +1,9 @@
 {
-    "idf.adapterTargetName": "esp32s3"
+    "idf.adapterTargetName": "esp32s3",
+    "files.associations": {
+        "*.jsx": "javascriptreact",
+        "*.js": "javascript",
+        "*.ipp": "cpp",
+        "system_error": "cpp"
+    }
 }

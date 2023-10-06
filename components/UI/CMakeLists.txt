@@ -1,16 +1,22 @@
+SET(SOURCES screens/ui_Screen1.c
+    ui.c
+    components/ui_comp_hook.c
+    ui_helpers.c
+    images/ui_img_ebike_bg_png.c
+    images/ui_img_icn_charge_png.c
+    images/ui_img_menu_line_png.c
+    images/ui_img_slider_battery_png.c
+    images/ui_img_icn_flash_png.c
+    images/ui_img_speed_slider_png.c
+    fonts/ui_font_batteryv.c
+    fonts/ui_font_Big.c
+    fonts/ui_font_Iltatic_style.c
+    fonts/ui_font_Medium.c
+    fonts/ui_font_Number.c
+    fonts/ui_font_percentagekm.c
+    fonts/ui_font_Small.c)
 
-idf_component_register(SRCS "ui.c"
-                            "ui_helpers.c"
-                            "ui_img_800x480_c050_02_png.c"
-                            "ui_img_410158353.c"
-                            "ui_img_626270897.c"
-                            "ui_img_626276270.c"
-                            "ui_img_1086482287.c"
-                            "ui_img_1415402543.c"
-                            "ui_img_1614482188.c"
-                            "ui_img_1797835574.c"
-                            "ui_img_bar_800_01_png.c"
-                            "ui_img_bar_800_02_png.c"
-                            "ui_img_wizee_logo_03_160x40_png.c"
-                    INCLUDE_DIRS "."
-                    PRIV_REQUIRES lvgl-3)
+
+idf_component_register(SRCS ${SOURCES}
+                       REQUIRES lvgl-3
+                       )
