@@ -4,6 +4,9 @@
         "*.jsx": "javascriptreact",
         "*.js": "javascript",
         "*.ipp": "cpp",
-        "system_error": "cpp"
+        "system_error": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp"
     }
 }

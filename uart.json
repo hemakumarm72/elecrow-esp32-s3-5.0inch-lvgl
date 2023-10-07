@@ -1,0 +1,14 @@
+{
+  "power_generated_percentage": 50,
+  "speed_percentage": 35,
+  "speed_value": 35,
+  "power_generated_value": 6.5,
+  "temp_percentage": 40,
+  "temp_value": 23.5,
+  "b1_value_voltage": 38,
+  "b1_value_distance": 83.5,
+  "b1_value_percentage": 30,
+  "b2_value_voltage": 38,
+  "b2_value_distance": 83.5,
+  "b2_value_percentage": 30
+}

@@ -71,6 +71,7 @@ set(CORE_SRCS
   )
 
 set(LIBRARY_SRCS
+  libraries/ArduinoJson-6.21.3/src/ArduinoJson.hpp
   libraries/ArduinoOTA/src/ArduinoOTA.cpp
   libraries/AsyncUDP/src/AsyncUDP.cpp
   libraries/BluetoothSerial/src/BluetoothSerial.cpp
@@ -167,6 +168,7 @@ set(BLE_SRCS
 set(includedirs
   variants/${IDF_TARGET}/
   cores/esp32/
+  libraries/ArduinoJson-6.21.3/src
   libraries/ArduinoOTA/src
   libraries/AsyncUDP/src
   libraries/BLE/src
