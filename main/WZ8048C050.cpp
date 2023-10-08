@@ -1,6 +1,7 @@
 #include <lvgl.h>
 #include <ArduinoJson.h>
-
+#include <esp_now.h>
+#include <WiFi.h>
 #include "ui.h"
 
 #include <SPI.h>
@@ -20,23 +21,23 @@ SemaphoreHandle_t xGuiSemaphore;
 
 void ui_reset(void);
 
-// struct SpiRamAllocator
-// {
-//     void *allocate(size_t size)
-//     {
-//         return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
-//     }
+struct SpiRamAllocator
+{
+    void *allocate(size_t size)
+    {
+        return heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+    }
 
-//     void deallocate(void *pointer)
-//     {
-//         heap_caps_free(pointer);
-//     }
+    void deallocate(void *pointer)
+    {
+        heap_caps_free(pointer);
+    }
 
-//     void *reallocate(void *ptr, size_t new_size)
-//     {
-//         return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM);
-//     }
-// };
+    void *reallocate(void *ptr, size_t new_size)
+    {
+        return heap_caps_realloc(ptr, new_size, MALLOC_CAP_SPIRAM);
+    }
+};
 
 #include <Arduino_GFX_Library.h>
 #define TFT_BL 2
@@ -116,6 +117,7 @@ extern "C" void app_main()
     xGuiSemaphore = xSemaphoreCreateMutex();
 
     Serial.begin(9600); // Init Display
+
     lcd->begin();
     lcd->fillScreen(BLACK);
     lcd->setTextSize(2);
@@ -203,7 +205,7 @@ void ui_reset()
     lv_label_set_text(ui_Label2, "+0");
 }
 
-void refresh_date(DynamicJsonDocument &data)
+void refresh_date(BasicJsonDocument<SpiRamAllocator> data)
 {
 
     auto power_percentage = data["power_generated_percentage"].as<float>();
@@ -225,8 +227,8 @@ void refresh_date(DynamicJsonDocument &data)
     auto b2_value = data["b2_value_percentage"].as<float>();
     auto b2_value_percentage = data["b2_value_percentage"].as<float>();
 
-    Serial.println(temp_value);
-    Serial.println(String(temp_value ? temp_value : 0, 1).c_str());
+    // Serial.println(temp_value);
+    // Serial.println(String(temp_value ? temp_value : 0, 1).c_str());
 
     lv_slider_set_value(ui_Slider1, int(power_percentage ? power_percentage : 0), LV_ANIM_ON);
     lv_slider_set_value(ui_Slider2, int(speed_percentage ? speed_percentage : 0), LV_ANIM_ON);
@@ -251,32 +253,107 @@ void refresh_date(DynamicJsonDocument &data)
     lv_bar_set_value(ui_Bar3, int(b2_value_percentage ? b2_value_percentage : 0), LV_ANIM_ON);
 }
 
+typedef struct struct_message
+{
+    char a[50];
+} struct_message;
+
+// Create a struct_message called myData
+struct_message myData;
+
+void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
+{
+    memcpy(&myData, incomingData, sizeof(myData));
+    Serial.print("Bytes received: ");
+    Serial.println(len);
+    Serial.print("Char: ");
+    Serial.println(myData.a);
+    Serial.println();
+}
+void InitESPNow()
+{
+    WiFi.disconnect();
+    if (esp_now_init() == ESP_OK)
+    {
+        Serial.println("ESPNow Init Success");
+    }
+    else
+    {
+        Serial.println("ESPNow Init Failed");
+        // Retry InitESPNow, add a counte and then restart?
+        // InitESPNow();
+        // or Simply Restart
+        ESP.restart();
+    }
+}
+
 static void json_reader(void *pvParameter)
 {
     (void)pvParameter;
-    // using SpiRamJsonDocument = BasicJsonDocument<SpiRamAllocator>;
+    //  using SpiRamJsonDocument = BasicJsonDocument<SpiRamAllocator>;
+    WiFi.mode(WIFI_STA);
+    Serial.print("ESP32 MAC Address: ");
+    Serial.println(WiFi.macAddress());
+    InitESPNow();
+    // esp_wifi_set_channel(11, WIFI_SECOND_CHAN_NONE);
+
+    // Init ESP-NOW
+    if (esp_now_init() != ESP_OK)
+    {
+        Serial.println("Error initializing ESP-NOW");
+        return;
+    }
+
+    // Once ESPNow is successfully Init, we will register for recv CB to
+    // get recv packer info
+    // esp_now_register_recv_cb(OnDataRecv);
+    // esp_now_init();
+
+    esp_now_register_recv_cb(OnDataRecv);
 
     while (1)
     {
-        String data = Serial.readStringUntil('\n');
-
-        // Parse received JSON data
-        // SpiRamJsonDocument jsonDoc(500); // // Psram allocated
-        DynamicJsonDocument jsonDoc(500);
-        DeserializationError error = deserializeJson(jsonDoc, data);
-
-        if (error)
-        {
-            // Serial.println("Error parsing JSON data");
-        }
-        else
-        {
-            Serial.println("Received JSON data:");
-            serializeJson(jsonDoc, Serial);
-
-            // const char *sensor = jsonDoc["sensor"];
-            refresh_date(jsonDoc);
-        }
-        vTaskDelay(pdMS_TO_TICKS(10)); // Adjust the delay as needed
     }
+    // Initialize ESP-NOW
+
+    // while (1)
+    // {
+
+    // Serial.print("Bytes received: ");
+    // Serial.println(len);
+    // Serial.print("Char: ");
+    // Serial.println(myData.a);
+    // Serial.print("Int: ");
+    // Serial.println(myData.b);
+    // Serial.print("Float: ");
+    // Serial.println(myData.c);
+    // Serial.print("Bool: ");
+    // Serial.println(myData.d);
+    // Serial.println();
+    // vTaskDelay(1000);
+
+    // if (Serial.available())
+    // {
+    //     String data = Serial.readString();
+    //     Serial.println(data);
+    //     // Parse received JSON data
+    //     SpiRamJsonDocument jsonDoc(500); // // Psram allocated
+    //     // StaticJsonDocument jsonDoc(500);
+    //     DeserializationError error = deserializeJson(jsonDoc, data);
+
+    //     if (error)
+    //     {
+    //         // Serial.println("Error parsing JSON data");
+    //     }
+    //     else
+    //     {
+    //         Serial.println("Received JSON data:");
+    //         // serializeJson(jsonDoc, Serial);
+
+    //         // const char *sensor = jsonDoc["sensor"];
+    //         refresh_date(jsonDoc);
+    //     }
+    //     // vTaskDelay(pdMS_TO_TICKS(10)); // Adjust the delay as needed
+    // }
+    //}
 }
